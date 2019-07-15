@@ -15,6 +15,8 @@ export class WalletManager implements State.IWalletManager {
     public byUsername: { [key: string]: State.IWallet };
     // @TODO: make this private and read-only
     public logger: Logger.ILogger = app.resolvePlugin<Logger.ILogger>("logger");
+    private identifiers: string[];
+    private byIdentifier: { [key: string]: State.IWallet };
 
     constructor() {
         this.reset();
@@ -30,6 +32,10 @@ export class WalletManager implements State.IWalletManager {
 
     public allByUsername(): State.IWallet[] {
         return Object.values(this.byUsername);
+    }
+
+    public findByIdentifier(id: string): State.IWallet {
+        return this.byIdentifier[id];
     }
 
     public findByAddress(address: string): State.IWallet {
@@ -56,8 +62,8 @@ export class WalletManager implements State.IWalletManager {
         return this.byUsername[username];
     }
 
-    public has(addressOrPublicKey: string): boolean {
-        return this.hasByAddress(addressOrPublicKey) || this.hasByPublicKey(addressOrPublicKey);
+    public has(id: string): boolean {
+        return !!this.identifiers[id];
     }
 
     public hasByAddress(address: string): boolean {
@@ -70,6 +76,10 @@ export class WalletManager implements State.IWalletManager {
 
     public hasByUsername(username: string): boolean {
         return !!this.byUsername[username];
+    }
+
+    public forget(id: string): void {
+        delete this.byIdentifier[id];
     }
 
     public forgetByAddress(address: string): void {
@@ -93,14 +103,20 @@ export class WalletManager implements State.IWalletManager {
     public reindex(wallet: State.IWallet): void {
         if (wallet.address) {
             this.byAddress[wallet.address] = wallet;
+            this.byIdentifier[wallet.address] = wallet;
+            this.identifiers.push(wallet.address); // ensure unique before pushing
         }
 
         if (wallet.publicKey) {
             this.byPublicKey[wallet.publicKey] = wallet;
+            this.byIdentifier[wallet.publicKey] = wallet;
+            this.identifiers.push(wallet.publicKey); // ensure unique before pushing
         }
 
         if (wallet.username) {
             this.byUsername[wallet.username] = wallet;
+            this.byIdentifier[wallet.username] = wallet;
+            this.identifiers.push(wallet.username); // ensure unique before pushing
         }
     }
 
@@ -310,9 +326,7 @@ export class WalletManager implements State.IWalletManager {
 
                     if (a.publicKey === b.publicKey) {
                         throw new Error(
-                            `The balance and public key of both delegates are identical! Delegate "${
-                                a.username
-                            }" appears twice in the list.`,
+                            `The balance and public key of both delegates are identical! Delegate "${a.username}" appears twice in the list.`,
                         );
                     }
 

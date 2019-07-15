@@ -48,7 +48,9 @@ export interface IWalletManager {
 
     findByAddress(address: string): IWallet;
 
-    has(addressOrPublicKey: string): boolean;
+    has(id: string): boolean;
+
+    findByIdentifier(id: string): IWallet;
 
     findByPublicKey(publicKey: string): IWallet;
 
@@ -77,6 +79,8 @@ export interface IWalletManager {
     isDelegate(publicKey: string): boolean;
 
     canBePurged(wallet: IWallet): boolean;
+
+    forget(id: string): void;
 
     forgetByAddress(address: string): void;
 
